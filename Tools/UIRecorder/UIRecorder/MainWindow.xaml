@@ -90,7 +90,7 @@
                         </TabItem>
                         <TabItem Name="tabItemCode">
                             <TabItem.Header>
-                                <Label Content="C# Code" HorizontalAlignment="Stretch"/>
+                                <Label Content="py Code" HorizontalAlignment="Stretch"/>
                             </TabItem.Header>
                             <TextBox Name="textBoxCode" TextWrapping="Wrap" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" MouseEnter="textBoxCode_MouseEnter">
                                 <TextBox.ToolTip>

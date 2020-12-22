@@ -54,7 +54,7 @@ namespace WinAppDriverUIRecorder
                 return;
             }
 
-            var keyboardTaskDescription = GenerateCSCode.GetDecodedKeyboardInput(strBase64, bCapsLock, bNumLock, bScrollLock);
+            var keyboardTaskDescription = GeneratePyCode.GetDecodedKeyboardInput(strBase64, bCapsLock, bNumLock, bScrollLock);
 
             StringBuilder sb = new StringBuilder();
             foreach (var strLine in keyboardTaskDescription)

@@ -50,6 +50,10 @@ namespace WinAppDriverUIRecorder
             if (string.IsNullOrEmpty(this._strPath))
             {
                 this._strPath = GenerateXPath.GenerateXPathToUiElement(this, _pathNodes, ref _uiTreeNode).Trim();
+                string[] splitted = this._strPath.Split('/');
+                StringBuilder sb = new StringBuilder();
+
+                this._strPath = "\"//"+splitted[splitted.Length - 1];
             }
 
             if (string.IsNullOrEmpty(this._strPath))
@@ -159,7 +163,7 @@ namespace WinAppDriverUIRecorder
                     {
                         if (this.UiTaskName == EnumUiTaskName.KeyboardInput)
                         {
-                            var keyboardTaskDescription = GenerateCSCode.GetDecodedKeyboardInput(this.Base64Text, this.CapsLock, this.NumLock, this.ScrollLock);
+                            var keyboardTaskDescription = GeneratePyCode.GetDecodedKeyboardInput(this.Base64Text, this.CapsLock, this.NumLock, this.ScrollLock);
                             StringBuilder sb = new StringBuilder();
                             foreach (var strLine in keyboardTaskDescription)
                             {
@@ -210,7 +214,7 @@ namespace WinAppDriverUIRecorder
             data2.CopyTo(data, data1.Length);
             this.Base64Text = Convert.ToBase64String(data);
 
-            var keyboardTaskDescription = GenerateCSCode.GetDecodedKeyboardInput(this.Base64Text, this.CapsLock, this.NumLock, this.ScrollLock);
+            var keyboardTaskDescription = GeneratePyCode.GetDecodedKeyboardInput(this.Base64Text, this.CapsLock, this.NumLock, this.ScrollLock);
             StringBuilder sb = new StringBuilder();
             foreach (var strLine in keyboardTaskDescription)
             {
@@ -220,33 +224,33 @@ namespace WinAppDriverUIRecorder
             this._strDescription = $"{this.UiTaskName} VirtualKeys=\"{sb.ToString()}\" CapsLock={this.CapsLock} NumLock={this.NumLock} ScrollLock={this.ScrollLock}";
         }
 
-        public string GetCSCode(string focusedElemName)
+        public string GetPyCode(string focusedElemName)
         {
             StringBuilder sb = new StringBuilder();
-            sb.AppendLine("// " + this.Description);
+            sb.AppendLine("# " + this.Description);
 
-            string consoleWriteLine = "Console.WriteLine(\"" + this.Description.Replace("\"", "\\\"") + "\");";
+            string consoleWriteLine = "print(\"" + this.Description.Replace("\"", "\\\"") + "\")";
             sb.AppendLine(consoleWriteLine);
 
             if (this.UiTaskName == EnumUiTaskName.LeftClick)
             {
-                sb.AppendLine(GenerateCSCode.LeftClick(this, VariableName));
+                sb.AppendLine(GeneratePyCode.LeftClick(this, VariableName));
             }
             else if (this.UiTaskName == EnumUiTaskName.RightClick)
             {
-                sb.AppendLine(GenerateCSCode.RightClick(this, VariableName));
+                sb.AppendLine(GeneratePyCode.RightClick(this, VariableName));
             }
             else if (this.UiTaskName == EnumUiTaskName.LeftDblClick)
             {
-                sb.AppendLine(GenerateCSCode.DoubleClick(this, VariableName));
+                sb.AppendLine(GeneratePyCode.DoubleClick(this, VariableName));
             }
             else if (this.UiTaskName == EnumUiTaskName.MouseWheel)
             {
-                sb.AppendLine(GenerateCSCode.Wheel(this, VariableName));
+                sb.AppendLine(GeneratePyCode.Wheel(this, VariableName));
             }
             else if (this.UiTaskName == EnumUiTaskName.KeyboardInput)
             {
-                sb.AppendLine(GenerateCSCode.SendKeys(this, focusedElemName));
+                sb.AppendLine(GeneratePyCode.SendKeys(this, focusedElemName));
             }
 
             return sb.ToString();
@@ -274,46 +278,44 @@ namespace WinAppDriverUIRecorder
         }
     }
 
-    class GenerateCSCode
+    class GeneratePyCode
     {
         public static string GetCodeBlock(RecordedUiTask uiTask, string elemName, string uiActionLine)
         {
             var xpath = "xpath_" + elemName;
             elemName = "winElem_" + elemName;
 
-            string codeBlock = $"string {xpath} = {uiTask.GetXPath(true)};\n" +
-                $"var {elemName} = desktopSession.FindElementByAbsoluteXPath({xpath});\n" +
-                $"if ({elemName} != null)\n" +
-                "{\n" +
+            string codeBlock = $"{xpath} = {uiTask.GetXPath(true)}\n" +
+                $"{elemName} = self.driver.find_element_by_xpath({xpath})\n" +
+                $"if {elemName} != None :\n" +
                 "CODEBLOCK" +
-                "}\n" +
-                "else\n" +
-                "{\n" +
-                "    Console.WriteLine($\"Failed to find element using xpath: {" + $"{xpath}" + "}\");\n" +
-                "    return;\n" +
-                "}\n";
+                "\n" +
+                "else:\n" +
+                "   print(\"Failed to find element using xpath: " + $"{xpath}" + "\")\n" +
+                "   return\n" +
+                "\n";
 
             return codeBlock.Replace("CODEBLOCK", uiActionLine);
         }
 
         public static string LeftClick(RecordedUiTask uiTask, string elemName)
         {
-            string codeLine = $"    winElem_{elemName}.Click();\n";
+            string codeLine = $"    winElem_{elemName}.click();\n";
             return GetCodeBlock(uiTask, elemName, codeLine);
         }
 
         public static string DoubleClick(RecordedUiTask uiTask, string elemName)
         {
-            string codeLine = $"    desktopSession.DesktopSessionElement.Mouse.MouseMove(winElem_{elemName}.Coordinates);\n" +
-                            $"    desktopSession.DesktopSessionElement.Mouse.DoubleClick(null);\n";
+            string codeLine = $"    pyautogui.moveTo(winElem_{elemName}.location.x, winElem_{elemName}.location.y)\n" +
+                              $"    pyautogui.doubleclick()\n";
 
             return GetCodeBlock(uiTask, elemName, codeLine);
         }
 
         public static string RightClick(RecordedUiTask uiTask, string elemName)
         {
-            string codeLine = $"    desktopSession.DesktopSessionElement.Mouse.MouseMove(winElem_{elemName}.Coordinates);\n" +
-                            $"    desktopSession.DesktopSessionElement.Mouse.ContextClick(null);\n";
+            string codeLine = $"    pyautogui.moveTo(winElem_{elemName}.location.x, winElem_{elemName}.location.y)\n" +
+                              $"    pyautogui.click(button='right')\n";
 
             return GetCodeBlock(uiTask, elemName, codeLine);
         }
@@ -410,7 +412,6 @@ namespace WinAppDriverUIRecorder
             {
                 lines.Add("\"" + sb.ToString() + "\"");
             }
-
             return lines;
         }
 
@@ -422,10 +423,10 @@ namespace WinAppDriverUIRecorder
 
             focusedElemeName = "winElem_" + focusedElemeName;
 
-            sb.AppendLine($"System.Threading.Thread.Sleep(100);");
+            sb.AppendLine($"time.sleep(1)");
             foreach (string line in lines)
             {
-                sb.AppendLine($"{focusedElemeName}.SendKeys({line});");
+                sb.AppendLine($"{focusedElemeName}.send_keys({line})");
             }
 
             return sb.ToString();

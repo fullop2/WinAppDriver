@@ -253,7 +253,7 @@ namespace WinAppDriverUIRecorder
                 }
             }
 
-            textBoxCode.Text = selectedItem.GetCSCode(focusedElementName);
+            textBoxCode.Text = selectedItem.GetPyCode(focusedElementName);
 
             if (selectedItem.UiTaskName != EnumUiTaskName.KeyboardInput)
             {
@@ -330,7 +330,7 @@ namespace WinAppDriverUIRecorder
                             focusedLeftElementName = uiTask.VariableName;
                         }
 
-                        sb.AppendLine(uiTask.GetCSCode(focusedLeftElementName));
+                        sb.AppendLine(uiTask.GetPyCode(focusedLeftElementName));
                     }
                 }
             }
@@ -362,7 +362,7 @@ namespace WinAppDriverUIRecorder
             this.Dispatcher.Invoke(new Action(() =>
             {
                 ((ToolTip)btnWinAppDriverCode.ToolTip).IsOpen = false;
-                toolTipText.Text = "Generate and copy C# code to Clipboard";
+                toolTipText.Text = "Generate and copy Py code to Clipboard";
             }), System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
 
