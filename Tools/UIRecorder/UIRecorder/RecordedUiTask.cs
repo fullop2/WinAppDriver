@@ -311,7 +311,7 @@ namespace WinAppDriverUIRecorder
                  "        'y': window_position['y'] + \n" +
                 $"             winElem_{elemName}.location['y'] + \n" +
                 $"             int(winElem_{elemName}.size['height']/2) \n" +
-                 "    }" + 
+                 "    } \n" + 
                 $"    pyautogui.moveTo(center_position['x'],center_position['y'])\n" +
                 $"    pyautogui.doubleClick()\n";
 
@@ -401,9 +401,15 @@ namespace WinAppDriverUIRecorder
                         string vkStr = vk.ToString();
                         string vkSendKey = ConstVariables.Vk2string(vkStr);
 
+                        //(vk == VirtualKeys.VK_CONTROL || vk == VirtualKeys.VK_SHIFT || vk == VirtualKeys.VK_MENU)
                         if (nCtrlKeyDown == 0)
                         {
-                            lines.Add(sb.ToString() + " + Keys." + vkSendKey);
+                            if (vk.Equals(VirtualKeys.VK_LCONTROL) || vk.Equals(VirtualKeys.VK_RCONTROL) ||
+                                vk.Equals(VirtualKeys.VK_LMENU) || vk.Equals(VirtualKeys.VK_RMENU) ||
+                                vk.Equals(VirtualKeys.VK_LSHIFT) || vk.Equals(VirtualKeys.VK_RSHIFT))
+                                    lines.Add(sb.ToString() + " + Keys." + vkSendKey);
+                            else
+                                lines.Add(sb.ToString());
                             sb.Clear();
                         }
                         else
@@ -429,7 +435,7 @@ namespace WinAppDriverUIRecorder
 
             focusedElemeName = "winElem_" + focusedElemeName;
 
-            sb.AppendLine($"time.sleep(1)");
+            sb.AppendLine($"time.sleep(0.1)");
             foreach (string line in lines)
             {
                 sb.AppendLine($"{focusedElemeName}.send_keys({line})");
