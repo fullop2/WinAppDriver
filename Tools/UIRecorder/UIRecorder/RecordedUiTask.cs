@@ -53,7 +53,7 @@ namespace WinAppDriverUIRecorder
                 string[] splitted = this._strPath.Split('/');
                 StringBuilder sb = new StringBuilder();
 
-                this._strPath = "\"//"+splitted[splitted.Length - 1];
+                this._strPath = "\"//"+splitted[splitted.Length - 1]; // get only last object 
             }
 
             if (string.IsNullOrEmpty(this._strPath))
@@ -282,32 +282,38 @@ namespace WinAppDriverUIRecorder
     {
         public static string GetCodeBlock(RecordedUiTask uiTask, string elemName, string uiActionLine)
         {
-            var xpath = "xpath_" + elemName;
-            elemName = "winElem_" + elemName;
+            var xpath = "xpath_"+elemName;
+            elemName = "winElem_"+elemName;
 
-            string codeBlock = $"{xpath} = {uiTask.GetXPath(true)}\n" +
+            string codeBlock = 
+                $"{xpath} = {uiTask.GetXPath(true)}\n" +
                 $"{elemName} = self.driver.find_element_by_xpath({xpath})\n" +
-                $"if {elemName} != None :\n" +
-                "CODEBLOCK" +
-                "\n" +
-                "else:\n" +
-                "   print(\"Failed to find element using xpath: " + $"{xpath}" + "\")\n" +
-                "   return\n" +
-                "\n";
+                "CODEBLOCK";
 
             return codeBlock.Replace("CODEBLOCK", uiActionLine);
         }
 
         public static string LeftClick(RecordedUiTask uiTask, string elemName)
         {
-            string codeLine = $"    winElem_{elemName}.click();\n";
+            string codeLine = $"    winElem_{elemName}.click()\n";
             return GetCodeBlock(uiTask, elemName, codeLine);
         }
 
         public static string DoubleClick(RecordedUiTask uiTask, string elemName)
         {
-            string codeLine = $"    pyautogui.moveTo(winElem_{elemName}.location.x, winElem_{elemName}.location.y)\n" +
-                              $"    pyautogui.doubleclick()\n";
+            string codeLine =
+                $"    window_position = self.driver.get_window_position()\n" +
+                $"    center_position = \\ \n" +
+                 "    {  \n" +
+                 "        'x': window_position['x'] + \n" +
+                $"             winElem_{elemName}.location['x'] + \n" +
+                $"             int(winElem_{elemName}.size['width']/2), \n" +
+                 "        'y': window_position['y'] + \n" +
+                $"             winElem_{elemName}.location['y'] + \n" +
+                $"             int(winElem_{elemName}.size['height']/2) \n" +
+                 "    }" + 
+                $"    pyautogui.moveTo(center_position['x'],center_position['y'])\n" +
+                $"    pyautogui.doubleClick()\n";
 
             return GetCodeBlock(uiTask, elemName, codeLine);
         }
