@@ -17,6 +17,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Runtime.InteropServices;
+
 
 namespace WinAppDriverUIRecorder
 {
@@ -50,10 +52,11 @@ namespace WinAppDriverUIRecorder
             if (string.IsNullOrEmpty(this._strPath))
             {
                 this._strPath = GenerateXPath.GenerateXPathToUiElement(this, _pathNodes, ref _uiTreeNode).Trim();
-                string[] splitted = this._strPath.Split('/');
-                StringBuilder sb = new StringBuilder();
+                //string[] splitted = this._strPath.Split('/');
+                //StringBuilder sb = new StringBuilder();
 
-                this._strPath = "\"//"+splitted[splitted.Length - 1]; // get only last object 
+                //this._strPath = "\"//"+splitted[splitted.Length - 1]; // get only last object 
+                this._strPath.Replace("/", "//");
             }
 
             if (string.IsNullOrEmpty(this._strPath))
@@ -229,7 +232,7 @@ namespace WinAppDriverUIRecorder
             StringBuilder sb = new StringBuilder();
             sb.AppendLine("# " + this.Description);
 
-            string consoleWriteLine = "print(\"" + this.Description.Replace("\"", "\\\"") + "\")";
+            string consoleWriteLine = "        print(\"" + this.Description.Replace("\"", "\\\"") + "\")";
             sb.AppendLine(consoleWriteLine);
 
             if (this.UiTaskName == EnumUiTaskName.LeftClick)
@@ -277,51 +280,57 @@ namespace WinAppDriverUIRecorder
             this._strDescription = null;
         }
     }
-
+  
     class GeneratePyCode
     {
+        [DllImport("user32")]
+        public static extern int GetClientRect(int hwnd, ref RECT lpRect);
+ 
+
         public static string GetCodeBlock(RecordedUiTask uiTask, string elemName, string uiActionLine)
         {
             var xpath = "xpath_"+elemName;
             elemName = "winElem_"+elemName;
-
+            
             string codeBlock = 
-                $"{xpath} = {uiTask.GetXPath(true)}\n" +
-                $"{elemName} = self.driver.find_element_by_xpath({xpath})\n" +
+                $"        {xpath} = {uiTask.GetXPath(true)}\n" +
+                $"        {elemName} = self.driver.find_element_by_xpath({xpath})\n" +
                 "CODEBLOCK";
 
             return codeBlock.Replace("CODEBLOCK", uiActionLine);
         }
 
+   
+
         public static string LeftClick(RecordedUiTask uiTask, string elemName)
         {
-            string codeLine = $"    winElem_{elemName}.click()\n";
+            string codeLine = $"        winElem_{elemName}.click()\n";
             return GetCodeBlock(uiTask, elemName, codeLine);
         }
 
         public static string DoubleClick(RecordedUiTask uiTask, string elemName)
         {
             string codeLine =
-                $"    window_position = self.driver.get_window_position()\n" +
-                $"    center_position = \\ \n" +
-                 "    {  \n" +
-                 "        'x': window_position['x'] + \n" +
-                $"             winElem_{elemName}.location['x'] + \n" +
-                $"             int(winElem_{elemName}.size['width']/2), \n" +
-                 "        'y': window_position['y'] + \n" +
-                $"             winElem_{elemName}.location['y'] + \n" +
-                $"             int(winElem_{elemName}.size['height']/2) \n" +
-                 "    } \n" + 
-                $"    pyautogui.moveTo(center_position['x'],center_position['y'])\n" +
-                $"    pyautogui.doubleClick()\n";
+                $"        window_position = self.driver.get_window_position()\n" +
+                $"        center_position = \\ \n" +
+                 "        {  \n" +
+                 "            'x': window_position['x'] + \n" +
+                $"                 winElem_{elemName}.location['x'] + \n" +
+                $"                 int(winElem_{elemName}.size['width']/2), \n" +
+                 "            'y': window_position['y'] + \n" +
+                $"                 winElem_{elemName}.location['y'] + \n" +
+                $"                 int(winElem_{elemName}.size['height']/2) \n" +
+                 "        } \n" + 
+                $"        pyautogui.moveTo(center_position['x'],center_position['y'])\n" +
+                $"        pyautogui.doubleClick()\n";
 
             return GetCodeBlock(uiTask, elemName, codeLine);
         }
 
         public static string RightClick(RecordedUiTask uiTask, string elemName)
         {
-            string codeLine = $"    pyautogui.moveTo(winElem_{elemName}.location.x, winElem_{elemName}.location.y)\n" +
-                              $"    pyautogui.click(button='right')\n";
+            string codeLine = $"        pyautogui.moveTo(winElem_{elemName}.location.x, winElem_{elemName}.location.y)\n" +
+                              $"        pyautogui.click(button='right')\n";
 
             return GetCodeBlock(uiTask, elemName, codeLine);
         }
@@ -435,10 +444,10 @@ namespace WinAppDriverUIRecorder
 
             focusedElemeName = "winElem_" + focusedElemeName;
 
-            sb.AppendLine($"time.sleep(0.1)");
+            sb.AppendLine($"        time.sleep(0.1)");
             foreach (string line in lines)
             {
-                sb.AppendLine($"{focusedElemeName}.send_keys({line})");
+                sb.AppendLine($"        {focusedElemeName}.send_keys({line})");
             }
 
             return sb.ToString();

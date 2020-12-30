@@ -307,6 +307,26 @@ namespace WinAppDriverUIRecorder
         {
             StringBuilder sb = new StringBuilder();
 
+            sb.AppendLine(
+                "import pyautogui\n" +
+                "from appium import webdriver\n" +
+                "from selenium.webdriver.common.keys import Keys\n" +
+                "\n" +
+                "class Test():\n" +
+                "    def setup_method(self,method):\n" +
+                "        desired_caps={}\n" +
+                "        desired_caps['app'] = 'Root'\n" +
+                "        desired_caps['platformName'] = 'Windows'\n" +
+                "        desired_caps['deviceName'] = 'WindowsPC'\n" +
+                "        self.driver = webdriver.Remote(command_executor='http://127.0.0.1:4723', desired_capabilities = desired_caps)\n" +
+                "\n" +
+                "    def teardown_method(self,method):\n" +
+                "        self.driver.quit()\n" +
+                "\n" +
+                "    def test(self):\n" +
+                "");
+
+
             lock (RecordedUiTask.s_lockRecordedUi)
             {
                 if (RecordedUiTask.s_listRecordedUi.Count == 0)
@@ -330,7 +350,7 @@ namespace WinAppDriverUIRecorder
                             focusedLeftElementName = uiTask.VariableName;
                         }
 
-                        sb.AppendLine(uiTask.GetPyCode(focusedLeftElementName));
+                        sb.AppendLine("        "+uiTask.GetPyCode(focusedLeftElementName));
                     }
                 }
             }
@@ -339,6 +359,7 @@ namespace WinAppDriverUIRecorder
             {
                 Clipboard.SetText(sb.ToString());
 
+                System.IO.File.WriteAllText("C:/WinAppDriverPyCode/test.py",sb.ToString());
                 this.Dispatcher.Invoke(new Action(() =>
                 {
                     this.toolTipText.Text = "WinAppDriver client code copied to clipboard";
